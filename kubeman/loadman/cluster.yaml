@@ -1,0 +1,124 @@
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   name: connector-script
+# data:
+#   generate-connector.sh: |
+#     #!/bin/bash
+#     CONNECTOR=""
+#     for ((i=0;i<3;i++)); do
+#       CONNECTOR+="$(($i+1))@my-statefulset-$i.my-headless-service.default.svc.cluster.local:9093"
+#       if [ $i -lt 2 ]; then
+#         CONNECTOR+=","
+#       fi
+#     done
+#     echo $CONNECTOR
+# --
+# apiVersion: apps/v1
+# kind: StatefulSet
+# metadata:
+#   name: my-statefulset
+#   labels:
+#     app: kcluster
+# spec:
+#   serviceName: "my-headless-service"
+#   replicas: 3
+#   selector:
+#     matchLabels:
+#       app: kcluster
+#   template:
+#     metadata:
+#       labels:
+#         app: kcluster
+#     spec:
+#       initContainers:
+#       - name: init
+#         image: busybox
+#         command: ['sh', '-c', 'export CONNECTOR=$(/mnt/generate-connector.sh)']
+#         volumeMounts:
+#         - name: config
+#           mountPath: /mnt
+#       containers:
+#       - name: kafkaman
+#         image: bumory1987/kafkaman:0.002
+#         ports:
+#         - containerPort: 9092
+#         - containerPort: 9093
+#         env:
+#         - name: NODE_ID
+#           value: $(expr $(POD_INDEX) + 1)
+#         - name: CONNECTOR
+#           valueFrom:
+#             configMapKeyRef:
+#               name: connector-script
+#               key: generate-connector.sh
+#         - name: IP_NAME
+#           value: "$(expr $(POD_INDEX) + 1)@my-statefulset-$(POD_INDEX).my-headless-service.default.svc.cluster.local:9093"
+          
+#   volumes:
+#   - name: config
+#     configMap:
+#       name: connector-script
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: connector-script
+data:
+  generate-connector.sh: |
+    #!/bin/bash
+    CONNECTOR=""
+    for ((i=0;i<3;i++)); do
+      CONNECTOR+="$(($i+1))@my-statefulset-$i.my-headless-service.default.svc.cluster.local:9093"
+      if [ $i -lt 2 ]; then
+        CONNECTOR+=","
+      fi
+    done
+    echo $CONNECTOR
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: my-statefulset
+  labels:
+    app: kcluster
+spec:
+  serviceName: "my-headless-service"
+  replicas: 3
+  selector:
+    matchLabels:
+      app: kcluster
+  template:
+    metadata:
+      labels:
+        app: kcluster
+    spec:
+      initContainers:
+      - name: init
+        image: busybox
+        command: ['sh', '-c', 'export CONNECTOR=$(/mnt/generate-connector.sh)']
+        volumeMounts:
+        - name: config
+          mountPath: /mnt
+      containers:
+      - name: kafkaman
+        image: bumory1987/kafkaman:0.002
+        ports:
+        - containerPort: 9092
+        - containerPort: 9093
+        env:
+        - name: NODE_ID
+          value: $(expr $(POD_INDEX) + 1)
+        - name: CONNECTOR
+          valueFrom:
+            configMapKeyRef:
+              name: connector-script
+              key: generate-connector.sh
+        - name: IP_NAME
+          value: "$(expr $(POD_INDEX) + 1)@my-statefulset-$(POD_INDEX).my-headless-service.default.svc.cluster.local:9093"
+          
+      volumes:  # volumes should be defined under spec.template.spec
+      - name: config
+        configMap:
+          name: connector-script

@@ -1,0 +1,39 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: my-statefulset
+  namespace: kman
+  labels:
+    app: kcluster
+spec:
+  serviceName: "my-headless-service"
+  replicas: 1  # Adjust the number of replicas as needed
+  selector:
+    matchLabels:
+      app: kcluster
+  template:
+    metadata:
+      labels:
+        app: kcluster
+    spec:
+      containers:
+      - name: kafkaman
+        image: bumory1987/kafkaman:0.006
+        ports:
+        - containerPort: 9092
+        - containerPort: 9093
+        - containerPort: 30987
+        env:
+        - name: NODE_ID
+          value: "1"
+        - name: CONNECTOR
+          value: "1@my-statefulset-0.my-headless-service.kman.svc.cluster.local:9093"
+        - name: IP_NAME
+          value: "INTERNAL://my-statefulset-0.my-headless-service.kman.svc.cluster.local:9092,EXTERNAL://34.97.39.51:30987"
+        - name: SECURITYP_MAP
+          value: "listener.security.protocol.map=INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT"
+        - name: INNER_CON
+          value: "inter.broker.listener.name=INTERNAL"
+        - name: LISTENER
+          value: "INTERNAL://:9092,CONTROLLER://:9093,EXTERNAL://:30987"

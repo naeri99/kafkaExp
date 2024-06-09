@@ -1,0 +1,58 @@
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: my-headless-service-sec
+# spec:
+#   clusterIP: None
+#   selector:
+#     app: kcluster-sec
+#   ports:
+#   - name: port-9032
+#     port: 9032
+#     targetPort: 9032
+#   - name: port-9022
+#     port: 9022
+#     targetPort: 9022
+# ---
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name:  my-statefulset-sec
+  namespace: kman
+  labels:
+    app: kcluster
+spec:
+  serviceName: my-headless-service
+  replicas: 1  # Adjust the number of replicas as needed
+  selector:
+    matchLabels:
+      app: kcluster
+  template:
+    metadata:
+      labels:
+        app: kcluster
+    spec:
+      containers:
+      - name: kafkamantwo
+        image: bumory1987/kafkaman:0.006
+        ports:
+        - containerPort: 9092
+        - containerPort: 9093
+        - containerPort: 9024
+        env:
+        - name: NODE_ID
+          value: "2"
+        - name: CONNECTOR
+          value: "1@my-statefulset-0.my-headless-service.kman.svc.cluster.local:9093,2@my-statefulset-sec-0.my-headless-service.kman.svc.cluster.local:9093"
+        - name: IP_NAME
+          value: "INTERNAL://my-statefulset-sec-0.my-headless-service.kman.svc.cluster.local:9092,EXTERNAL://34.97.141.197:9024"
+        - name: SECURITYP_MAP
+          value: "listener.security.protocol.map=INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT"
+        - name: INNER_CON
+          value: "inter.broker.listener.name=INTERNAL"
+        - name: LISTENER
+          value: "INTERNAL://:9092,CONTROLLER://:9093,EXTERNAL://:9024"
+
+

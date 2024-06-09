@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kafka-0
+  labels:
+    app: kcluster
+spec:
+  hostname: kafka-0
+  subdomain: kafka
+  containers:
+  - name: kafkaman
+    image: bumory1987/kafkaman:0.002
+    ports:
+    - containerPort: 9092
+    - containerPort: 9093
+    env:
+    - name: NODE_ID
+      value: "1"
+    - name: CONNECTOR
+      value: "1@kafka-0.kafka.$(NAMESPACE).svc.cluster.local:9093"
+    - name: IP_NAME
+      value: "kafka-0.kafka.$(NAMESPACE).svc.cluster.local"
+    - name: NAMESPACE
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.namespace
