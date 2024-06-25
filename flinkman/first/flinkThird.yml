@@ -1,0 +1,33 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name:  my-statefulset-flink-third
+  namespace: flinkman
+  labels:
+    app: flinkcluster
+spec:
+  serviceName: private-flink-service
+  replicas: 1  # Adjust the number of replicas as needed
+  selector:
+    matchLabels:
+      app: flinkcluster
+  template:
+    metadata:
+      labels:
+        app: flinkcluster
+    spec:
+      containers:
+      - name: flinkman
+        image: bumory1987/flink:0.4
+        ports:
+        - containerPort: 22
+        - containerPort: 8081
+        - containerPort: 6123
+        env:
+        - name: MASTER
+          value: "my-statefulset-flink-third-0.private-flink-service.flinkman.svc.cluster.local"
+        - name: WORKER
+          value: "my-statefulset-flink-third-0.private-flink-service.flinkman.svc.cluster.local"
+        - name: RPC_PORT
+          value: "my-statefulset-flink-0.private-flink-service.flinkman.svc.cluster.local"
