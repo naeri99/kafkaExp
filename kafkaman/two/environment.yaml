@@ -14,9 +14,9 @@ spec:
   selector:
     app: kcluster
   ports:
-  - name: port-9032
-    port: 9032
-    targetPort: 9032
-  - name: port-9022
-    port: 9022
-    targetPort: 9022
+  - name: port-9093
+    port: 9093
+    targetPort: 9093
+  - name: port-9092
+    port: 9092
+    targetPort: 9092
