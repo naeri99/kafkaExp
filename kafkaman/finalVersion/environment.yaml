@@ -24,6 +24,21 @@ spec:
     app: kcluster
   ports:
     - protocol: TCP
-      port: 9024
-      targetPort: 9024
+      port: 9094
+      targetPort: 9094
   type: LoadBalancer
+  sessionAffinity: ClientIP
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: kafka-loadbalancer
+#   namespace: kman
+# spec:
+#   selector:
+#     app: kcluster
+#   ports:
+#     - protocol: TCP
+#       port: 9024   # Port exposed on the Kubernetes cluster
+#       targetPort: 9024  # Port on the backend pods (Kafka brokers)
+#       nodePort: 31024   # Specify the NodePort number (optional, Kubernetes will allocate if not specified)
+#   type: NodePort   
